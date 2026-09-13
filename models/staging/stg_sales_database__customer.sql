@@ -1,8 +1,5 @@
-with source as (
-    select * from {{ source('sales_database', 'customers') }}
-),
+with renamed as (
 
-renamed as (
     select
         cast(customer_id as int64) as customer_id,
         cast(first_name as string) as customer_first_name,
@@ -14,7 +11,8 @@ renamed as (
         cast(state as string)      as customer_state,
         cast(zip_code as string)   as customer_zip_code
 
-    from source
+    from {{ source('sales_database', 'customers') }}
+
 )
 
 select * from renamed

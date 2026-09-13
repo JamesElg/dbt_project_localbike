@@ -1,13 +1,11 @@
-with source as (
-    select * from {{ source('sales_database', 'categories') }}
-),
+with renamed as (
 
-renamed as (
     select
         cast(category_id as int64)    as category_id,
         cast(category_name as string) as category_name
 
-    from source
+    from {{ source('sales_database', 'categories') }}
+
 )
 
 select * from renamed
