@@ -100,14 +100,16 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_sales_database__store')
-              field: store_id
+              arguments:
+                to: ref('stg_sales_database__store')
+                field: store_id
       - name: manager_id
         description: "staff_id of this staff member's manager. Null for the top-level manager (staff_id = 1) — expected, not tested for not_null."
         tests:
           - relationships:
-              to: ref('stg_sales_database__staff')
-              field: staff_id
+              arguments:
+                to: ref('stg_sales_database__staff')
+                field: staff_id
 
   - name: stg_sales_database__product
     description: "One row per product, staged from sales_database.products."
@@ -123,15 +125,17 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_sales_database__brand')
-              field: brand_id
+              arguments:
+                to: ref('stg_sales_database__brand')
+                field: brand_id
       - name: category_id
         description: "Category this product belongs to."
         tests:
           - not_null
           - relationships:
-              to: ref('stg_sales_database__category')
-              field: category_id
+              arguments:
+                to: ref('stg_sales_database__category')
+                field: category_id
       - name: model_year
         description: "Model year of the product."
         tests: [not_null]
@@ -150,15 +154,17 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_sales_database__store')
-              field: store_id
+              arguments:
+                to: ref('stg_sales_database__store')
+                field: store_id
       - name: product_id
         description: "Product this stock record belongs to."
         tests:
           - not_null
           - relationships:
-              to: ref('stg_sales_database__product')
-              field: product_id
+              arguments:
+                to: ref('stg_sales_database__product')
+                field: product_id
       - name: stock_quantity
         description: "Quantity currently on hand for this product at this store."
         tests: [not_null]
@@ -174,15 +180,17 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_sales_database__customer')
-              field: customer_id
+              arguments:
+                to: ref('stg_sales_database__customer')
+                field: customer_id
       - name: order_status
         description: "Raw order status code from the source (1-4). No label is provided by the source system. Business rule: status 4 is treated as completed/shipped downstream (the only status with a shipped_date) and drives which orders count toward revenue KPIs."
         tests:
           - not_null
           - accepted_values:
-              values: [1, 2, 3, 4]
-              quote: false
+              arguments:
+                values: [1, 2, 3, 4]
+                quote: false
       - name: order_date
         description: "Date the order was placed."
         tests: [not_null]
@@ -196,16 +204,18 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_sales_database__store')
-              field: store_id
+              arguments:
+                to: ref('stg_sales_database__store')
+                field: store_id
       - name: staff_id
         description: "Staff member who processed the order."
         tests:
           - not_null
           - relationships:
-              to: ref('stg_sales_database__staff')
-              field: staff_id
-  
+              arguments:
+                to: ref('stg_sales_database__staff')
+                field: staff_id
+
   - name: stg_sales_database__order_item
     description: "One row per product sold within an order, staged from sales_database.order_items. This is the finest grain available for the sales fact."
     columns:
@@ -217,8 +227,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_sales_database__order')
-              field: order_id
+              arguments:
+                to: ref('stg_sales_database__order')
+                field: order_id
       - name: item_id
         description: "Line number of this item within its order."
         tests: [not_null]
@@ -227,8 +238,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_sales_database__product')
-              field: product_id
+              arguments:
+                to: ref('stg_sales_database__product')
+                field: product_id
       - name: order_item_quantity
         description: "Quantity of the product sold on this line."
         tests: [not_null]
@@ -240,5 +252,6 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: [0.05, 0.07, 0.10, 0.20]
-              quote: false
+              arguments:
+                values: [0.05, 0.07, 0.10, 0.20]
+                quote: false
