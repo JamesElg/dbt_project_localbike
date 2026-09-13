@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: mrt_staff_performance
+    description: >
+      One row per staff member per month. Revenue and order KPIs from
+      completed orders. Business rule: compare staff members only
+      within the same store_id — raw revenue is strongly correlated
+      with store volume (see the Phase 2 finding), so a cross-store
+      comparison would mostly reflect store size, not individual
+      performance. Note: staff_id 4 and 10 never appear in this mart —
+      they have zero recorded orders across the whole dataset (a known,
+      documented data limitation, not a modeling defect).
+    columns:
+      - name: staff_month_id
+        description: "Surrogate key built by concatenating staff_id and order_month."
+        tests: [unique, not_null]
+      - name: order_month
+        description: "First day of the calendar month this row summarizes."
+        tests: [not_null]
+      - name: staff_id
+        description: "Staff member this row summarizes."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__staff')
+                field: staff_id
+      - name: staff_first_name
+        tests: [not_null]
+      - name: staff_last_name
+        tests: [not_null]
+      - name: store_id
+        description: "Store this staff member is assigned to. Use this to scope any staff comparison to the same store."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__store')
+                field: store_id
+      - name: store_name
+        tests: [not_null]
+      - name: total_revenue_amount
+        description: "Total revenue from completed orders processed by this staff member and month."
+        tests: [not_null]
+      - name: total_order_count
+        description: "Number of distinct completed orders processed by this staff member and month."
+        tests: [not_null]

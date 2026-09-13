@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: mrt_product_performance
+    description: >
+      One row per product per month. Revenue and discount KPIs from
+      completed orders. Does not include stock — see
+      mrt_product_current_stock for the separate, non-time-bound stock
+      signal.
+    columns:
+      - name: product_month_id
+        description: "Surrogate key built by concatenating product_id and order_month."
+        tests: [unique, not_null]
+      - name: order_month
+        description: "First day of the calendar month this row summarizes."
+        tests: [not_null]
+      - name: product_id
+        description: "Product this row summarizes."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__product')
+                field: product_id
+      - name: product_name
+        tests: [not_null]
+      - name: brand_name
+        tests: [not_null]
+      - name: category_name
+        tests: [not_null]
+      - name: total_revenue_amount
+        description: "Total revenue from completed orders for this product and month."
+        tests: [not_null]
+      - name: average_discount_rate
+        description: "Ratio of sums: total discount amount divided by total gross amount (quantity x list price), not an average of per-line discount rates."
+        tests: [not_null]

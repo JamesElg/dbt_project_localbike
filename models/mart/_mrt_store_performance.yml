@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: mrt_store_performance
+    description: >
+      One row per store per month. Revenue and order KPIs, restricted to
+      completed orders (order_status = 4). This is the mart backing the
+      "store performance" lever from the KPI catalog.
+    columns:
+      - name: store_month_id
+        description: "Surrogate key built by concatenating store_id and order_month."
+        tests: [unique, not_null]
+      - name: order_month
+        description: "First day of the calendar month this row summarizes."
+        tests: [not_null]
+      - name: store_id
+        description: "Store this row summarizes."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__store')
+                field: store_id
+      - name: store_name
+        description: "Commercial name of the store."
+        tests: [not_null]
+      - name: total_revenue_amount
+        description: "North Star KPI. Total revenue from completed orders for this store and month."
+        tests: [not_null]
+      - name: total_order_count
+        description: "Number of distinct completed orders for this store and month."
+        tests: [not_null]
+      - name: average_order_amount
+        description: "total_revenue_amount divided by total_order_count (ratio of sums, not an average of per-order ratios)."
+        tests: [not_null]

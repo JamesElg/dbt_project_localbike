@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: mrt_product_current_stock
+    description: >
+      One row per product: total units currently on hand across all
+      stores. This is a point-in-time snapshot (not historized) — there
+      is deliberately no time dimension on this mart, to avoid implying
+      a trend the source data cannot support.
+    columns:
+      - name: product_id
+        description: "Unique identifier of the product."
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__product')
+                field: product_id
+      - name: product_name
+        tests: [not_null]
+      - name: brand_name
+        tests: [not_null]
+      - name: category_name
+        tests: [not_null]
+      - name: current_stock_quantity
+        description: "Total units on hand for this product across all stores, as of the current snapshot. Coalesced to 0 for products absent from the stock source."
+        tests: [not_null]
