@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: sales_database
+    schema: sales_database
+    description: "Raw Dataset on Local Bike on Bigquery"
+    tables:
+      - name: stores
+      - name: categories
+      - name: brands
+      - name: customers
+      - name: staffs
+      - name: products
+      - name: stocks
+      - name: orders
+      - name: order_items
