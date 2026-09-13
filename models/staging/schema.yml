@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: stg_sales_database__store
+    description: "One row per Local Bike store, staged from sales_database.stores."
+    columns:
+      - name: store_id
+        description: "Unique identifier of the store."
+        tests: [unique, not_null]
+      - name: store_name
+        description: "Commercial name of the store."
+        tests: [not_null]
+      - name: store_phone
+        description: "Store contact phone number."
+      - name: store_email
+        description: "Store contact email address."
+      - name: store_street
+        description: "Street address of the store."
+      - name: store_city
+        description: "City where the store is located."
+        tests: [not_null]
+      - name: store_state
+        description: "US state where the store is located."
+        tests: [not_null]
+      - name: store_zip_code
+        description: "ZIP code of the store."
+
+  - name: stg_sales_database__category
+    description: "One row per product category, staged from sales_database.categories."
+    columns:
+      - name: category_id
+        description: "Unique identifier of the category."
+        tests: [unique, not_null]
+      - name: category_name
+        description: "Name of the product category."
+        tests: [not_null]
+
+  - name: stg_sales_database__brand
+    description: "One row per bike brand, staged from sales_database.brands."
+    columns:
+      - name: brand_id
+        description: "Unique identifier of the brand."
+        tests: [unique, not_null]
+      - name: brand_name
+        description: "Name of the brand."
+        tests: [not_null]
