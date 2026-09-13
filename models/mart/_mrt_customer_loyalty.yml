@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: mrt_customer_loyalty
+    description: >
+      One row per customer, lifetime (no monthly breakdown — loyalty is
+      a cumulative concept). total_order_count and is_repeat_customer
+      count all orders regardless of status (option A: a repeat order
+      attempt is still a loyalty signal, even if later rejected or
+      still pending). total_revenue_amount stays restricted to
+      completed orders only, consistent with the revenue rule used
+      everywhere else in the project. repeat_customer_rate itself is
+      not pre-computed here — it is COUNT(is_repeat_customer) / COUNT(*)
+      computed by the BI tool from this mart.
+    columns:
+      - name: customer_id
+        description: "Unique identifier of the customer."
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__customer')
+                field: customer_id
+      - name: customer_first_name
+        tests: [not_null]
+      - name: customer_last_name
+        tests: [not_null]
+      - name: total_order_count
+        description: "Total number of distinct orders placed by this customer, regardless of order status."
+        tests: [not_null]
+      - name: total_revenue_amount
+        description: "Total revenue from this customer's completed orders only."
+        tests: [not_null]
+      - name: is_repeat_customer
+        description: "True when total_order_count >= 2 (based on all orders, any status)."
+        tests: [not_null]
