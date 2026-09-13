@@ -44,3 +44,214 @@ models:
       - name: brand_name
         description: "Name of the brand."
         tests: [not_null]
+
+  - name: stg_sales_database__customer
+    description: "One row per customer, staged from sales_database.customers."
+    columns:
+      - name: customer_id
+        description: "Unique identifier of the customer."
+        tests: [unique, not_null]
+      - name: customer_first_name
+        description: "Customer's first name."
+        tests: [not_null]
+      - name: customer_last_name
+        description: "Customer's last name."
+        tests: [not_null]
+      - name: customer_phone
+        description: "Customer's phone number. Missing for most customers (87.7% null in the source) — kept as-is, not tested for completeness, and not used by any KPI in the current scope."
+      - name: customer_email
+        description: "Customer's email address."
+        tests: [not_null]
+      - name: customer_street
+        description: "Customer's street address."
+        tests: [not_null]
+      - name: customer_city
+        description: "City of the customer's address."
+        tests: [not_null]
+      - name: customer_state
+        description: "US state of the customer's address."
+        tests: [not_null]
+      - name: customer_zip_code
+        description: "ZIP code of the customer's address."
+        tests: [not_null]
+
+  - name: stg_sales_database__staff
+    description: "One row per staff member, staged from sales_database.staffs."
+    columns:
+      - name: staff_id
+        description: "Unique identifier of the staff member."
+        tests: [unique, not_null]
+      - name: staff_first_name
+        description: "Staff member's first name."
+        tests: [not_null]
+      - name: staff_last_name
+        description: "Staff member's last name."
+        tests: [not_null]
+      - name: staff_email
+        description: "Staff member's email address."
+        tests: [not_null]
+      - name: staff_phone
+        description: "Staff member's phone number."
+      - name: is_active_staff
+        description: "True if the staff member is currently active. All 10 staff members are active as of this dataset — no inactive case observed yet."
+        tests: [not_null]
+      - name: store_id
+        description: "Store the staff member is assigned to."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__store')
+                field: store_id
+      - name: manager_id
+        description: "staff_id of this staff member's manager. Null for the top-level manager (staff_id = 1) — expected, not tested for not_null."
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__staff')
+                field: staff_id
+
+  - name: stg_sales_database__product
+    description: "One row per product, staged from sales_database.products."
+    columns:
+      - name: product_id
+        description: "Unique identifier of the product."
+        tests: [unique, not_null]
+      - name: product_name
+        description: "Commercial name of the product."
+        tests: [not_null]
+      - name: brand_id
+        description: "Brand this product belongs to."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__brand')
+                field: brand_id
+      - name: category_id
+        description: "Category this product belongs to."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__category')
+                field: category_id
+      - name: model_year
+        description: "Model year of the product."
+        tests: [not_null]
+      - name: product_list_price
+        description: "Catalog list price of the product, in USD. Distinct from the price recorded on an order line (order_item_list_price), which reflects the price at the time of sale."
+        tests: [not_null]
+
+  - name: stg_sales_database__stock
+    description: "One row per store x product combination, staged from sales_database.stocks. This is a point-in-time snapshot of on-hand inventory — it is not historized, so no trend or stockout rate can be computed from it (see the Phase 2 scoping decision)."
+    columns:
+      - name: stock_id
+        description: "Surrogate key built by concatenating store_id and product_id — the source has no single-column primary key."
+        tests: [unique, not_null]
+      - name: store_id
+        description: "Store this stock record belongs to."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__store')
+                field: store_id
+      - name: product_id
+        description: "Product this stock record belongs to."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__product')
+                field: product_id
+      - name: stock_quantity
+        description: "Quantity currently on hand for this product at this store."
+        tests: [not_null]
+
+  - name: stg_sales_database__order
+    description: "One row per order, staged from sales_database.orders."
+    columns:
+      - name: order_id
+        description: "Unique identifier of the order."
+        tests: [unique, not_null]
+      - name: customer_id
+        description: "Customer who placed the order."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__customer')
+                field: customer_id
+      - name: order_status
+        description: "Raw order status code from the source (1-4). No label is provided by the source system. Business rule: status 4 is treated as completed/shipped downstream (the only status with a shipped_date) and drives which orders count toward revenue KPIs."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+                quote: false
+      - name: order_date
+        description: "Date the order was placed."
+        tests: [not_null]
+      - name: required_date
+        description: "Date the customer requested the order by."
+        tests: [not_null]
+      - name: shipped_date
+        description: "Date the order was shipped. Null for orders not yet shipped (status other than 4) — expected, not tested for completeness."
+      - name: store_id
+        description: "Store that fulfilled the order."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__store')
+                field: store_id
+      - name: staff_id
+        description: "Staff member who processed the order."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__staff')
+                field: staff_id
+
+  - name: stg_sales_database__order_item
+    description: "One row per product sold within an order, staged from sales_database.order_items. This is the finest grain available for the sales fact."
+    columns:
+      - name: order_item_id
+        description: "Surrogate key built by concatenating order_id and item_id — the source has no single-column primary key."
+        tests: [unique, not_null]
+      - name: order_id
+        description: "Order this line item belongs to."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__order')
+                field: order_id
+      - name: item_id
+        description: "Line number of this item within its order."
+        tests: [not_null]
+      - name: product_id
+        description: "Product sold on this line."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_sales_database__product')
+                field: product_id
+      - name: order_item_quantity
+        description: "Quantity of the product sold on this line."
+        tests: [not_null]
+      - name: order_item_list_price
+        description: "Price charged for the product on this line, at the time of sale. Distinct from product_list_price, the product's current catalog price."
+        tests: [not_null]
+      - name: order_item_discount_rate
+        description: "Discount rate applied to this line, as observed in the source (4 known tiers: 5%, 7%, 10%, 20%)."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0.05, 0.07, 0.10, 0.20]
+                quote: false
